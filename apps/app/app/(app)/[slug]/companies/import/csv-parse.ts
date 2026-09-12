@@ -3,8 +3,8 @@ export type ParsedCsv = { headers: string[]; rows: string[][] };
 export function parseCsv(text: string): ParsedCsv {
 	const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 	const records = parseRecords(normalized);
-	if (records.length === 0) return { headers: [], rows: [] };
 	const [first, ...rest] = records;
+	if (!first) return { headers: [], rows: [] };
 	return { headers: first, rows: rest.filter((r) => r.some(Boolean)) };
 }
 
