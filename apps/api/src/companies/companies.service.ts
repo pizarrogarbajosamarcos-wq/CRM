@@ -725,8 +725,7 @@ export class CompaniesService {
 		const toCreate: Prisma.CompanyCreateManyInput[] = [];
 		const skips: { row: number; reason: string }[] = [];
 
-		for (let i = 0; i < input.rows.length; i++) {
-			const row = input.rows[i];
+		for (const [i, row] of input.rows.entries()) {
 			const name = row.name.trim();
 			if (!name) {
 				skips.push({ row: i + 1, reason: "No name" });
