@@ -26,14 +26,14 @@
 		"db:test": "bun run --filter=@crm/db db:test"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.12",
-		"@oxlint/plugins": "1.82.0",
+		"@biomejs/biome": "^2.5.13",
+		"@oxlint/plugins": "^1.83.0",
 		"@paralleldrive/cuid2": "^3.3.0",
 		"drizzle-orm": "^0.45.2",
-		"knip": "6.35.1",
-		"oxlint": "1.82.0",
+		"knip": "^6.35.1",
+		"oxlint": "^1.83.0",
 		"turbo": "^2.10.12",
-		"typescript": "7.0.2"
+		"typescript": "^7.0.2"
 	},
 	"engines": {
 		"node": ">=22"
