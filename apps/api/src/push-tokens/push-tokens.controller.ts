@@ -1,19 +1,22 @@
-import { type auth, SESSION_COOKIE_NAME } from "@crm/auth";
+import { SESSION_COOKIE_NAME } from "@crm/auth";
 import { Body, Controller, Delete, Post, Query } from "@nestjs/common";
 import {
+	ApiBearerAuth,
 	ApiCookieAuth,
 	ApiOkResponse,
 	ApiOperation,
+	ApiSecurity,
 	ApiTags,
 	ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
+import type { RequestPrincipal } from "../auth/request-principal";
+import { Principal } from "../auth/request-principal.decorator";
 import { PushTokensService } from "./push-tokens.service";
-
-type CrmSession = UserSession<typeof auth>;
 
 @ApiTags("Push tokens")
 @ApiCookieAuth(SESSION_COOKIE_NAME)
+@ApiSecurity("apiKey")
+@ApiBearerAuth("oauth")
 @Controller("push-tokens")
 export class PushTokensController {
 	constructor(private readonly pushTokens: PushTokensService) {}
@@ -22,8 +25,8 @@ export class PushTokensController {
 	@ApiOperation({ summary: "Register this device's FCM token" })
 	@ApiOkResponse({ description: "The token was stored." })
 	@ApiUnauthorizedResponse({ description: "No valid session." })
-	register(@Session() session: CrmSession, @Body() body: unknown) {
-		return this.pushTokens.register(session.user.id, body);
+	register(@Principal() principal: RequestPrincipal, @Body() body: unknown) {
+		return this.pushTokens.register(principal.user.id, body);
 	}
 
 	@Delete()
@@ -32,7 +35,10 @@ export class PushTokensController {
 		description: "The token was removed if it belonged to the caller.",
 	})
 	@ApiUnauthorizedResponse({ description: "No valid session." })
-	unregister(@Session() session: CrmSession, @Query("token") token: string) {
-		return this.pushTokens.unregister(session.user.id, token);
+	unregister(
+		@Principal() principal: RequestPrincipal,
+		@Query("token") token: string,
+	) {
+		return this.pushTokens.unregister(principal.user.id, token);
 	}
 }

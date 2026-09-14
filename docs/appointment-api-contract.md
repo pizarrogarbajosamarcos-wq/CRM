@@ -16,13 +16,14 @@ Base URL: `https://api.jobsteward.ai`.
 Use the existing session, API key, or OAuth authentication.
 OAuth reads require `crm.read`. Mutations require `crm.write`.
 All successful responses use HTTP 200 and JSON.
-POST, PATCH, and DELETE require an `Idempotency-Key` of 1 to 128 printable ASCII characters.
+AP1–AP5 POST, PATCH, and DELETE require an `Idempotency-Key` of 1 to 128 printable ASCII characters.
 Retries reuse the same key and request. Distinct changes use different keys.
 GET and DELETE accept no body. POST and PATCH require JSON objects.
 Path identifiers cannot appear in request bodies or query parameters.
 Unknown fields return `400 VALIDATION_ERROR`.
 Responses include `Cache-Control: private, no-store` and `X-Request-Id`.
-Errors use the [asset error envelope](./asset-api-contract.md#errors).
+AP1–AP5 errors use the [asset error envelope](./asset-api-contract.md#errors).
+AP6 and AP7 errors keep `{ code, message }` at the top level.
 
 | ID | Method | Path | Response |
 | --- | --- | --- | --- |
@@ -31,10 +32,16 @@ Errors use the [asset error envelope](./asset-api-contract.md#errors).
 | AP3 | GET | `/projects/{projectId}/appointments/{appointmentId}` | `{"appointment": <Appointment>}` |
 | AP4 | PATCH | `/projects/{projectId}/appointments/{appointmentId}` | Updated or restored appointment |
 | AP5 | DELETE | `/projects/{projectId}/appointments/{appointmentId}` | `{"appointmentId": "...", "archivedAt": "...", "version": 2}` |
+| AP6 | POST | `/appointments/{appointmentId}/recordings/upload-url` | Flat upload slot |
+| AP7 | POST | `/appointments/{appointmentId}/recordings/complete` | `{"ok": true}` |
 
 Public appointment paths have no bridge prefix, version segment, or version header.
 Runtime OpenAPI at `/openapi.json` describes these canonical paths and the other root REST paths.
 It exposes no asset or appointment compatibility HTTP aliases.
+
+AP1–AP5 require an `Idempotency-Key` on POST, PATCH, and DELETE.
+AP6 and AP7 do not require that header. JobSteward never sends it.
+When present, the API uses it. Otherwise the service derives a key for replay.
 
 ## Appointment fields
 
@@ -152,6 +159,33 @@ Repeat the original asset POST with the same key to refresh an expired transfer 
 Send `PATCH /assets/{assetId}` with `{ "uploadCompleted": true }` to queue verification, then poll the asset detail until `READY`.
 Use the [asset contract](./asset-api-contract.md) for transfer and worker behavior.
 
+## Mobile meeting recordings
+
+JobSteward uses AP6 and AP7 for onsite meeting audio.
+AP6 accepts `{ "contentType", "byteSize", "filename" }` and returns a flat slot:
+
+```json
+{
+  "uploadUrl": "https://...",
+  "method": "PUT",
+  "headers": {
+    "Content-Type": "audio/mp4",
+    "Content-Length": "1843200"
+  },
+  "objectKey": "<asset.id>",
+  "expiresAt": "2026-09-03T16:00:00.000Z"
+}
+```
+
+`objectKey` is the artifact id. The client echoes it on AP7.
+AP7 accepts `{ "objectKey", "contentType", "byteSize", "durationSeconds" }` and returns `{ "ok": true }` as soon as verification is queued.
+The client does not poll A5 after End meeting.
+One current `meeting_recording` with source `MOBILE_RECORDING` exists per appointment.
+A pending unexpired upload refreshes the signed PUT and keeps the same `objectKey`.
+Otherwise AP6 creates a new artifact and retires the previous mobile recording.
+Missing, foreign, or expired complete requests return `409`.
+Recording routes stay off the nested asset error wrapper. Errors keep `{ code, message }` at the top level.
+
 Tests use disposable local PostgreSQL and storage fixtures.
 Local verification does not prove production R2 configuration, browser CORS, or deployment.
-No calendar invitations, transcription, summaries, estimates, or mobile recording controls are included.
+No calendar invitations, transcription, summaries, or estimates are included.

@@ -34,6 +34,7 @@ export function createR2Client(r2: R2Config): S3Client | null {
 	return new S3Client({
 		region: "auto",
 		endpoint: `https://${r2.accountId}.r2.cloudflarestorage.com`,
+		forcePathStyle: true,
 		credentials: {
 			accessKeyId: r2.accessKeyId as string,
 			secretAccessKey: r2.secretAccessKey as string,

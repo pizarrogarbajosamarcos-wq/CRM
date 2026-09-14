@@ -1,5 +1,5 @@
 import { assetRestMeta } from "../assets/asset-openapi";
-import type { RestMethod } from "../trpc/openapi";
+import { type RestMethod, restMeta } from "../trpc/openapi";
 
 function appointmentRestMeta(method: RestMethod, path: `/${string}`) {
 	const meta = assetRestMeta(method, path);
@@ -27,5 +27,15 @@ export const appointmentRoutes = {
 	archiveAppointment: appointmentRestMeta(
 		"DELETE",
 		"/projects/{projectId}/appointments/{appointmentId}",
+	),
+	requestRecordingUploadUrl: restMeta(
+		"POST",
+		"/appointments/{appointmentId}/recordings/upload-url",
+		["Appointments"],
+	),
+	completeRecordingUpload: restMeta(
+		"POST",
+		"/appointments/{appointmentId}/recordings/complete",
+		["Appointments"],
 	),
 };

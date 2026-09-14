@@ -1,5 +1,8 @@
-import type { BridgeFormResponsePayload, BridgeInboundPayload } from '@agent-xmpp/protocol';
-import type { TaskWireEvent } from './task-stanza-codec.js';
+import type {
+	BridgeFormResponsePayload,
+	BridgeInboundPayload,
+} from "@agent-xmpp/protocol";
+import type { TaskWireEvent } from "./task-stanza-codec.js";
 
 /**
  * Last-mile transport between the XMPP gateway and an agent runtime.
@@ -9,7 +12,7 @@ import type { TaskWireEvent } from './task-stanza-codec.js';
  * replace it later without changing XMPP routing.
  */
 export interface GatewayRuntimeMailbox {
-  deliverInbound(payload: BridgeInboundPayload): Promise<void>;
-  deliverFormResponse(payload: BridgeFormResponsePayload): Promise<void>;
-  deliverTaskEvent(event: TaskWireEvent): Promise<void>;
+	deliverInbound(payload: BridgeInboundPayload): Promise<void>;
+	deliverFormResponse(payload: BridgeFormResponsePayload): Promise<void>;
+	deliverTaskEvent(event: TaskWireEvent): Promise<void>;
 }

@@ -15,6 +15,6 @@ import { AssetsService } from "./assets.service";
 		AssetStorageService,
 		AssetWorkerService,
 	],
-	exports: [AssetsService],
+	exports: [AssetsService, AssetStorageService],
 })
 export class AssetsModule {}

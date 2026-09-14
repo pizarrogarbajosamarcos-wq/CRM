@@ -13,151 +13,191 @@
  * @see https://xmpp.org/extensions/xep-0085.html
  * @see https://xmpp.org/extensions/xep-0184.html
  */
-import type { Element } from '@xmpp/xml';
+import type { Element } from "@xmpp/xml";
 
-import { DEFAULT_PROTOCOL_NAMESPACES, type AgentMessage } from '@agent-xmpp/protocol';
+import {
+	DEFAULT_PROTOCOL_NAMESPACES,
+	type AgentMessage,
+} from "@agent-xmpp/protocol";
 
-import { sendComposingForAgent } from './agent-send.js';
-import { bareJid } from './xep-plugins/jid.js';
-import type { GatewayConfig } from './config.js';
+import { sendComposingForAgent } from "./agent-send.js";
+import { bareJid } from "./xep-plugins/jid.js";
+import type { GatewayConfig } from "./config.js";
 import {
-  pushFormResponseToBridge,
-  pushInboundToBridge,
-  resolveInboundChatTargets,
-  shouldAcceptStanza,
-  type InboundDeliveryContext,
-} from './delivery.js';
-import type { GatewayRuntimeMailbox } from './runtime-mailbox.js';
-import { isAgentJid, resolveTargetAgentJid, stanzaToAgentMessage } from './xep-plugins/message.js';
-import { parseAskQuestionSubmit } from './xep-plugins/data-form.js';
+	pushFormResponseToBridge,
+	pushInboundToBridge,
+	resolveInboundChatTargets,
+	shouldAcceptStanza,
+	type InboundDeliveryContext,
+} from "./delivery.js";
+import type { GatewayRuntimeMailbox } from "./runtime-mailbox.js";
 import {
-  buildReceivedReceipt,
-  isAckOrReceiptStanza,
-  receivedReceiptId,
-  requestsReceipt,
-} from './xep-plugins/receipts.js';
-import { parseTaskEvent } from './task-stanza-codec.js';
-import { handleVirtualAgentPresence, type VirtualAgentIdentity } from './xep-plugins/presence.js';
+	isAgentJid,
+	resolveTargetAgentJid,
+	stanzaToAgentMessage,
+} from "./xep-plugins/message.js";
+import { parseAskQuestionSubmit } from "./xep-plugins/data-form.js";
+import {
+	buildReceivedReceipt,
+	isAckOrReceiptStanza,
+	receivedReceiptId,
+	requestsReceipt,
+} from "./xep-plugins/receipts.js";
+import { parseTaskEvent } from "./task-stanza-codec.js";
+import {
+	handleVirtualAgentPresence,
+	type VirtualAgentIdentity,
+} from "./xep-plugins/presence.js";
 
 export type SendStanzaFn = (stanza: Element) => Promise<void>;
-export type SendForAgentFn = (agentJid: string, stanza: Element) => Promise<void>;
-export type ResolveVirtualAgentFn = (jid: string) => VirtualAgentIdentity | null;
+export type SendForAgentFn = (
+	agentJid: string,
+	stanza: Element,
+) => Promise<void>;
+export type ResolveVirtualAgentFn = (
+	jid: string,
+) => VirtualAgentIdentity | null;
 export type UpdatePresenceSubscriptionFn = (
-  agent: VirtualAgentIdentity,
-  subscriberJid: string,
-  subscribed: boolean,
+	agent: VirtualAgentIdentity,
+	subscriberJid: string,
+	subscribed: boolean,
 ) => void;
 
 export class StanzaRouter {
-  constructor(
-    private config: GatewayConfig,
-    private mailbox: GatewayRuntimeMailbox,
-    private sendForAgent: SendForAgentFn,
-    private resolveVirtualAgent?: ResolveVirtualAgentFn,
-    private onReceipt?: (ackedId: string) => void,
-    private updatePresenceSubscription?: UpdatePresenceSubscriptionFn,
-  ) {}
+	constructor(
+		private config: GatewayConfig,
+		private mailbox: GatewayRuntimeMailbox,
+		private sendForAgent: SendForAgentFn,
+		private resolveVirtualAgent?: ResolveVirtualAgentFn,
+		private onReceipt?: (ackedId: string) => void,
+		private updatePresenceSubscription?: UpdatePresenceSubscriptionFn,
+	) {}
 
-  async handleIncoming(stanza: Element): Promise<void> {
-    if (stanza.name === 'presence') {
-      const to = bareJid(String(stanza.attrs.to ?? ''));
-      const agent = this.resolveVirtualAgent?.(to);
-      if (agent) {
-        const result = handleVirtualAgentPresence(stanza, agent);
-        const change = result.subscriptionChange;
-        if (change) this.updatePresenceSubscription?.(agent, change.subscriberJid, change.subscribed);
-        for (const response of result.responses) {
-          await this.sendForAgent(agent.jid, response);
-        }
-      }
-      return;
-    }
-    if (stanza.name !== 'message') return;
+	async handleIncoming(stanza: Element): Promise<void> {
+		if (stanza.name === "presence") {
+			const to = bareJid(String(stanza.attrs.to ?? ""));
+			const agent = this.resolveVirtualAgent?.(to);
+			if (agent) {
+				const result = handleVirtualAgentPresence(stanza, agent);
+				const change = result.subscriptionChange;
+				if (change)
+					this.updatePresenceSubscription?.(
+						agent,
+						change.subscriberJid,
+						change.subscribed,
+					);
+				for (const response of result.responses) {
+					await this.sendForAgent(agent.jid, response);
+				}
+			}
+			return;
+		}
+		if (stanza.name !== "message") return;
 
-    const toBare = bareJid(String(stanza.attrs.to ?? ''));
-    // Stanzas arrive on the component JID; resolve which registered agent they target.
-    const agentJid = resolveTargetAgentJid(toBare, this.config.agentDomain, this.config.defaultAgentJid);
+		const toBare = bareJid(String(stanza.attrs.to ?? ""));
+		// Stanzas arrive on the component JID; resolve which registered agent they target.
+		const agentJid = resolveTargetAgentJid(
+			toBare,
+			this.config.agentDomain,
+			this.config.defaultAgentJid,
+		);
 
-    if (!isAgentJid(agentJid, this.config.agentDomain) && agentJid !== this.config.defaultAgentJid) {
-      return;
-    }
+		if (
+			!isAgentJid(agentJid, this.config.agentDomain) &&
+			agentJid !== this.config.defaultAgentJid
+		) {
+			return;
+		}
 
-    const from = stanza.attrs.from as string;
-    const fromBare = bareJid(from);
-    const agentBare = bareJid(agentJid);
-    // C2S inbox receives agent self-sent stanzas (outbound loopback) — drop them.
-    if (fromBare && agentBare && fromBare === agentBare) return;
-    const namespaces = this.config.protocolNamespaces ?? DEFAULT_PROTOCOL_NAMESPACES;
-    if (stanza.getChildren('event', namespaces.task).length > 0) {
-      try {
-        const taskEvent = parseTaskEvent(stanza, namespaces);
-        if (taskEvent) await this.mailbox.deliverTaskEvent(taskEvent);
-      } catch (err) {
-        console.error('[xmpp-gateway] invalid task lifecycle event:', err instanceof Error ? err.message : err);
-      }
-      return;
-    }
+		const from = stanza.attrs.from as string;
+		const fromBare = bareJid(from);
+		const agentBare = bareJid(agentJid);
+		// C2S inbox receives agent self-sent stanzas (outbound loopback) — drop them.
+		if (fromBare && agentBare && fromBare === agentBare) return;
+		const namespaces =
+			this.config.protocolNamespaces ?? DEFAULT_PROTOCOL_NAMESPACES;
+		if (stanza.getChildren("event", namespaces.task).length > 0) {
+			try {
+				const taskEvent = parseTaskEvent(stanza, namespaces);
+				if (taskEvent) await this.mailbox.deliverTaskEvent(taskEvent);
+			} catch (err) {
+				console.error(
+					"[xmpp-gateway] invalid task lifecycle event:",
+					err instanceof Error ? err.message : err,
+				);
+			}
+			return;
+		}
 
-    const formSubmit = parseAskQuestionSubmit(stanza);
-    if (formSubmit) {
-      const type = (stanza.attrs.type as string) || 'chat';
-      await pushFormResponseToBridge(this.config, this.mailbox, {
-        agentJid,
-        from,
-        stanzaType: type,
-        questionId: formSubmit.questionId,
-        selectedIndex: formSubmit.selectedIndex,
-      });
-      return;
-    }
+		const formSubmit = parseAskQuestionSubmit(stanza);
+		if (formSubmit) {
+			const type = (stanza.attrs.type as string) || "chat";
+			await pushFormResponseToBridge(this.config, this.mailbox, {
+				agentJid,
+				from,
+				stanzaType: type,
+				questionId: formSubmit.questionId,
+				selectedIndex: formSubmit.selectedIndex,
+			});
+			return;
+		}
 
-    if (isAckOrReceiptStanza(stanza)) {
-      // XEP-0184: a peer's <received/> confirms one of our outbound messages.
-      const acked = receivedReceiptId(stanza);
-      if (acked) this.onReceipt?.(acked);
-      return;
-    }
-    const agentMsg = stanzaToAgentMessage(stanza, this.config.agentDomain);
-    if (!agentMsg) return;
+		if (isAckOrReceiptStanza(stanza)) {
+			// XEP-0184: a peer's <received/> confirms one of our outbound messages.
+			const acked = receivedReceiptId(stanza);
+			if (acked) this.onReceipt?.(acked);
+			return;
+		}
+		const agentMsg = stanzaToAgentMessage(stanza, this.config.agentDomain);
+		if (!agentMsg) return;
 
-    const type = (stanza.attrs.type as string) || 'chat';
-    const agentNick = agentJid.split('@')[0];
-    const bodyText = typeof agentMsg.body === 'string' ? agentMsg.body : JSON.stringify(agentMsg.body);
+		const type = (stanza.attrs.type as string) || "chat";
+		const agentNick = agentJid.split("@")[0];
+		const bodyText =
+			typeof agentMsg.body === "string"
+				? agentMsg.body
+				: JSON.stringify(agentMsg.body);
 
-    if (!shouldAcceptStanza(type, from, bodyText, agentNick)) return;
+		if (!shouldAcceptStanza(type, from, bodyText, agentNick)) return;
 
-    const stanzaId = agentMsg.id;
+		const stanzaId = agentMsg.id;
 
-    const ctx: InboundDeliveryContext = {
-      agentMsg,
-      agentJid,
-      deliveryId: stanzaId,
-      stanzaType: type,
-      from,
-      redelivered: false,
-    };
+		const ctx: InboundDeliveryContext = {
+			agentMsg,
+			agentJid,
+			deliveryId: stanzaId,
+			stanzaType: type,
+			from,
+			redelivered: false,
+		};
 
-    void sendComposingForAgent(
-      (stanza) => this.sendForAgent(agentJid, stanza),
-      agentJid,
-      resolveInboundChatTargets(from, type, agentMsg),
-    ).catch((err) => {
-      console.error('[xmpp-gateway] composing notification send failed:', err);
-    });
+		void sendComposingForAgent(
+			(stanza) => this.sendForAgent(agentJid, stanza),
+			agentJid,
+			resolveInboundChatTargets(from, type, agentMsg),
+		).catch((err) => {
+			console.error("[xmpp-gateway] composing notification send failed:", err);
+		});
 
-    try {
-      await pushInboundToBridge(this.config, this.mailbox, ctx);
-    } catch (err) {
-      console.error('[xmpp-gateway] inbound delivery failed:', err instanceof Error ? err.message : err);
-      return;
-    }
+		try {
+			await pushInboundToBridge(this.config, this.mailbox, ctx);
+		} catch (err) {
+			console.error(
+				"[xmpp-gateway] inbound delivery failed:",
+				err instanceof Error ? err.message : err,
+			);
+			return;
+		}
 
-    // XEP-0184: ack only 1:1 messages that explicitly requested a receipt.
-    // Groupchat receipts are not used (§5.5) and unsolicited ones spam the sender.
-    if (from && type === 'chat' && requestsReceipt(stanza)) {
-      await this.sendForAgent(agentJid, buildReceivedReceipt(from, agentJid, stanzaId)).catch((err) => {
-        console.error('[xmpp-gateway] received receipt send failed:', err);
-      });
-    }
-  }
+		// XEP-0184: ack only 1:1 messages that explicitly requested a receipt.
+		// Groupchat receipts are not used (§5.5) and unsolicited ones spam the sender.
+		if (from && type === "chat" && requestsReceipt(stanza)) {
+			await this.sendForAgent(
+				agentJid,
+				buildReceivedReceipt(from, agentJid, stanzaId),
+			).catch((err) => {
+				console.error("[xmpp-gateway] received receipt send failed:", err);
+			});
+		}
+	}
 }

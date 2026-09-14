@@ -12,6 +12,10 @@ An asset belongs to exactly one project. An asset can reference one managed appo
 
 The public API has no upload ID workflow, customer-wide asset list, upload confirmation route, URL renewal route, cancellation route, or asset download route. `AssetUpload` and `AssetStorageJob` remain internal storage records.
 
+Mobile meeting audio from JobSteward uses the appointment recordings routes in [appointment-api-contract.md](./appointment-api-contract.md), not A1–A7.
+Those routes accept AAC-LC in an MPEG-4 container (`.m4a`) with `contentType` `audio/mp4`.
+A1–A7 remain the CRM workspace file API. Polling A5 is not part of End meeting.
+
 ## Common contract
 
 Base URL: `https://api.jobsteward.ai`. All paths below are relative to this base. All asset requests and responses use JSON except the direct R2 `PUT` transfer.

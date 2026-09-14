@@ -8,7 +8,11 @@ import {
 	UseMiddlewares,
 } from "nestjs-trpc";
 import type { z } from "zod";
-import { assetUser, idempotencyKey } from "../assets/asset-request";
+import {
+	assetUser,
+	idempotencyKey,
+	optionalIdempotencyKey,
+} from "../assets/asset-request";
 import type { AuthedTrpcContext } from "../trpc/context.types";
 import { AuthMiddleware } from "../trpc/middlewares/auth.middleware";
 import { appointmentRoutes } from "./appointment-openapi";
@@ -22,6 +26,13 @@ import {
 	projectAppointmentUpdateInput,
 } from "./appointments.contracts";
 import { AppointmentsService } from "./appointments.service";
+import {
+	recordingCompleteInput,
+	recordingCompleteSchema,
+	recordingUploadSlotSchema,
+	recordingUploadUrlInput,
+} from "./recording-upload.contracts";
+import { RecordingUploadService } from "./recording-upload.service";
 
 @Router({ alias: "appointments" })
 @UseMiddlewares(AuthMiddleware)
@@ -29,6 +40,8 @@ export class AppointmentsRouter {
 	constructor(
 		@Inject(AppointmentsService)
 		private readonly appointments: AppointmentsService,
+		@Inject(RecordingUploadService)
+		private readonly recordings: RecordingUploadService,
 	) {}
 
 	@Mutation({
@@ -111,6 +124,42 @@ export class AppointmentsRouter {
 			input.projectId,
 			input.appointmentId,
 			idempotencyKey(ctx),
+		);
+	}
+
+	@Mutation({
+		input: recordingUploadUrlInput,
+		output: recordingUploadSlotSchema,
+		meta: appointmentRoutes.requestRecordingUploadUrl,
+	})
+	requestRecordingUploadUrl(
+		@Ctx() ctx: AuthedTrpcContext,
+		@Input() input: z.infer<typeof recordingUploadUrlInput>,
+	) {
+		const { appointmentId, ...body } = input;
+		return this.recordings.requestUploadUrl(
+			assetUser(ctx),
+			appointmentId,
+			body,
+			optionalIdempotencyKey(ctx),
+		);
+	}
+
+	@Mutation({
+		input: recordingCompleteInput,
+		output: recordingCompleteSchema,
+		meta: appointmentRoutes.completeRecordingUpload,
+	})
+	completeRecordingUpload(
+		@Ctx() ctx: AuthedTrpcContext,
+		@Input() input: z.infer<typeof recordingCompleteInput>,
+	) {
+		const { appointmentId, ...body } = input;
+		return this.recordings.completeUpload(
+			assetUser(ctx),
+			appointmentId,
+			body,
+			optionalIdempotencyKey(ctx),
 		);
 	}
 }

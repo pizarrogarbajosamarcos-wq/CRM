@@ -17,6 +17,7 @@ import { timelineInput, timelineOutput, timelineCountsInput, timelineCountsOutpu
 import { agentListOutput, agentReviseInput, agentReviseOutput, agentIdInput, agentFilesOutput, agentSaveFileInput, agentSaveFileOutput, agentByIdOutput, agentHistoryInput, agentHistoryOutput, agentActivityOutput, agentUpdateInput, agentUpdateOutput, agentDeployInput, agentDeployOutput, agentPauseOutput, agentResumeOutput, agentArchiveOutput, agentRestoreOutput, agentRemoveOutput, agentRunNowInput, agentRunNowOutput, agentRetryRunInput, agentRetryRunOutput, agentCancelRunInput, agentCancelRunOutput } from "../agent/agents.contracts";
 import { apiKeyListInput, apiKeyListOutput, createApiKeyInput, createApiKeyOutput, revokeApiKeyInput, revokeApiKeyOutput } from "../api-keys/api-keys.contracts";
 import { projectAppointmentCreateInput, appointmentDetailSchema, projectAppointmentListInput, appointmentListSchema, projectAppointmentInput, projectAppointmentUpdateInput, appointmentArchiveSchema } from "../appointments/appointments.contracts";
+import { recordingUploadUrlInput, recordingUploadSlotSchema, recordingCompleteInput, recordingCompleteSchema } from "../appointments/recording-upload.contracts";
 import { projectAssetCreateInput, assetCreationSchema, appointmentAssetCreateInput, projectAssetListInput, assetListSchema, appointmentAssetListInput, assetMemberInput, assetDetailSchema, assetDeletionSchema } from "../assets/assets.contracts";
 import { assetUpdateInput } from "../assets/asset-metadata.contracts";
 import { companyListInput, companyListOutput, companyOptionsInput, companyOptionOutput, companyIdInput, companyDetailOutput, companyCreateInput, companySummaryOutput, companyUpdateArgs, companyArchiveResultOutput, companyBulkOwnerInput, companyBulkResultOutput, companyBulkInput, companyEnrichOutput, companyResearchOutput, setPrimaryContactInput, companySetPrimaryContactOutput } from "../companies/companies.contracts";
@@ -164,6 +165,14 @@ const appRouter = t.router({
     archiveAppointment: publicProcedure
       .input(projectAppointmentInput)
       .output(appointmentArchiveSchema)
+      .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    requestRecordingUploadUrl: publicProcedure
+      .input(recordingUploadUrlInput)
+      .output(recordingUploadSlotSchema)
+      .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    completeRecordingUpload: publicProcedure
+      .input(recordingCompleteInput)
+      .output(recordingCompleteSchema)
       .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
     }),
   assets: t.router({

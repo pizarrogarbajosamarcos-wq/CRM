@@ -25,6 +25,8 @@ describe("public asset resource routing", () => {
 			"/companies/c",
 			"/projects/p/assets-extra",
 			"/api/auth",
+			"/appointments/a/recordings/upload-url",
+			"/appointments/a/recordings/complete",
 		])
 			expect(isProjectResourcePath(path)).toBe(false);
 	});

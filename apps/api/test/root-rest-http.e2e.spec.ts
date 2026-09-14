@@ -109,6 +109,17 @@ describe("root REST bridge", () => {
 			.post("/push-tokens")
 			.send({})
 			.expect(401);
+		const registered = await request(fixture.app.getHttpServer())
+			.post("/push-tokens")
+			.set("x-asset-test-user", fixture.userId)
+			.send({ token: `${fixture.prefix}-fcm`, platform: "ios" })
+			.expect(201);
+		expect(registered.body).toEqual({ ok: true });
+		await request(fixture.app.getHttpServer())
+			.delete("/push-tokens")
+			.set("x-asset-test-user", fixture.userId)
+			.query({ token: `${fixture.prefix}-fcm` })
+			.expect(200);
 		await request(fixture.app.getHttpServer())
 			.get("/api/auth/get-session")
 			.expect(200);

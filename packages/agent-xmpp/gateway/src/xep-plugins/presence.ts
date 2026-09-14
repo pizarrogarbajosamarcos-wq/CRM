@@ -12,80 +12,102 @@
  *
  * @see https://www.rfc-editor.org/rfc/rfc6121#section-3
  */
-import { xml, type Element } from '@xmpp/xml';
+import { xml, type Element } from "@xmpp/xml";
 
-import { bareJid } from './jid.js';
+import { bareJid } from "./jid.js";
 
 export interface VirtualAgentIdentity {
-  jid: string;
-  name: string;
+	jid: string;
+	name: string;
 }
 
 export interface PresenceSubscriptionChange {
-  subscriberJid: string;
-  subscribed: boolean;
+	subscriberJid: string;
+	subscribed: boolean;
 }
 
 export interface VirtualAgentPresenceResult {
-  responses: Element[];
-  subscriptionChange?: PresenceSubscriptionChange;
+	responses: Element[];
+	subscriptionChange?: PresenceSubscriptionChange;
 }
 
-export const VIRTUAL_AGENT_RESOURCE = 'gateway';
+export const VIRTUAL_AGENT_RESOURCE = "gateway";
 
 export function virtualAgentPresenceJid(agent: VirtualAgentIdentity): string {
-  return `${bareJid(agent.jid)}/${VIRTUAL_AGENT_RESOURCE}`;
+	return `${bareJid(agent.jid)}/${VIRTUAL_AGENT_RESOURCE}`;
 }
 
-export function buildAvailablePresence(agent: VirtualAgentIdentity, to: string): Element {
-  return xml(
-    'presence',
-    { from: virtualAgentPresenceJid(agent), to },
-    xml('show', {}, 'chat'),
-    xml('status', {}, `${agent.name} is available`),
-  );
+export function buildAvailablePresence(
+	agent: VirtualAgentIdentity,
+	to: string,
+): Element {
+	return xml(
+		"presence",
+		{ from: virtualAgentPresenceJid(agent), to },
+		xml("show", {}, "chat"),
+		xml("status", {}, `${agent.name} is available`),
+	);
 }
 
-export function buildUnavailablePresence(agent: VirtualAgentIdentity, to: string): Element {
-  return xml('presence', {
-    type: 'unavailable',
-    from: virtualAgentPresenceJid(agent),
-    to,
-  });
+export function buildUnavailablePresence(
+	agent: VirtualAgentIdentity,
+	to: string,
+): Element {
+	return xml("presence", {
+		type: "unavailable",
+		from: virtualAgentPresenceJid(agent),
+		to,
+	});
 }
 
-export function buildSubscriptionAccepted(agent: VirtualAgentIdentity, to: string): Element {
-  return xml('presence', { type: 'subscribed', from: bareJid(agent.jid), to });
+export function buildSubscriptionAccepted(
+	agent: VirtualAgentIdentity,
+	to: string,
+): Element {
+	return xml("presence", { type: "subscribed", from: bareJid(agent.jid), to });
 }
 
-export function buildSubscriptionRemoved(agent: VirtualAgentIdentity, to: string): Element {
-  return xml('presence', { type: 'unsubscribed', from: bareJid(agent.jid), to });
+export function buildSubscriptionRemoved(
+	agent: VirtualAgentIdentity,
+	to: string,
+): Element {
+	return xml("presence", {
+		type: "unsubscribed",
+		from: bareJid(agent.jid),
+		to,
+	});
 }
 
-export function handleVirtualAgentPresence(stanza: Element, agent: VirtualAgentIdentity): VirtualAgentPresenceResult {
-  if (stanza.name !== 'presence') return { responses: [] };
-  const to = String(stanza.attrs.from ?? '');
-  if (!to) return { responses: [] };
-  const type = String(stanza.attrs.type ?? '');
-  const subscriberJid = bareJid(to);
-  if (type === 'subscribe') {
-    return {
-      responses: [buildSubscriptionAccepted(agent, to), buildAvailablePresence(agent, to)],
-      subscriptionChange: { subscriberJid, subscribed: true },
-    };
-  }
-  if (type === 'probe') {
-    return {
-      responses: [buildAvailablePresence(agent, to)],
-      subscriptionChange: { subscriberJid, subscribed: true },
-    };
-  }
-  if (type === '') return { responses: [buildAvailablePresence(agent, to)] };
-  if (type === 'unsubscribe') {
-    return {
-      responses: [buildSubscriptionRemoved(agent, to)],
-      subscriptionChange: { subscriberJid, subscribed: false },
-    };
-  }
-  return { responses: [] };
+export function handleVirtualAgentPresence(
+	stanza: Element,
+	agent: VirtualAgentIdentity,
+): VirtualAgentPresenceResult {
+	if (stanza.name !== "presence") return { responses: [] };
+	const to = String(stanza.attrs.from ?? "");
+	if (!to) return { responses: [] };
+	const type = String(stanza.attrs.type ?? "");
+	const subscriberJid = bareJid(to);
+	if (type === "subscribe") {
+		return {
+			responses: [
+				buildSubscriptionAccepted(agent, to),
+				buildAvailablePresence(agent, to),
+			],
+			subscriptionChange: { subscriberJid, subscribed: true },
+		};
+	}
+	if (type === "probe") {
+		return {
+			responses: [buildAvailablePresence(agent, to)],
+			subscriptionChange: { subscriberJid, subscribed: true },
+		};
+	}
+	if (type === "") return { responses: [buildAvailablePresence(agent, to)] };
+	if (type === "unsubscribe") {
+		return {
+			responses: [buildSubscriptionRemoved(agent, to)],
+			subscriptionChange: { subscriberJid, subscribed: false },
+		};
+	}
+	return { responses: [] };
 }
