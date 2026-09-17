@@ -1,0 +1,29 @@
+{
+	"campaign_id": "partwall-trade-show-2027",
+	"project": "PartWall",
+	"target_customer_type": "trade show exhibitors and industrial display buyers",
+	"geography": ["United States", "Canada"],
+	"event_window": {
+		"start": "2027-03-01",
+		"end": "2027-06-30"
+	},
+	"source_types": ["seed_url", "manual_list"],
+	"seed_urls": [],
+	"keywords": [
+		"exhibitor",
+		"trade show",
+		"booth",
+		"display",
+		"industrial",
+		"manufacturer"
+	],
+	"exclusions": ["job board", "press release only", "consumer retail"],
+	"max_companies": 25,
+	"max_pages_per_domain": 3,
+	"required_fields": ["company_name", "website", "evidence_excerpt"],
+	"scoring_rules": {
+		"fit_keyword_points": 15,
+		"evidence_points": 40,
+		"contact_field_points": 15
+	}
+}
