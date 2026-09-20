@@ -15,7 +15,7 @@ import {
 import { Spinner } from "@crm/ui/components/spinner";
 import { useMutation } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
-import { useId, useState } from "react";
+import { type ComponentProps, Suspense, useId, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { SEARCH_PARAM } from "@/lib/search-param-keys";
@@ -77,7 +77,24 @@ function ResultSummary({ result }: { result: ImportResult }) {
 	);
 }
 
+function ImportButton(props: ComponentProps<typeof Button>) {
+	return (
+		<Button variant="outline" {...props}>
+			<Icon icon={Upload} data-icon="inline-start" />
+			Import Excel
+		</Button>
+	);
+}
+
 export function ImportMaterialsSheet() {
+	return (
+		<Suspense fallback={<ImportButton disabled />}>
+			<ImportMaterialsForm />
+		</Suspense>
+	);
+}
+
+function ImportMaterialsForm() {
 	const trpc = useTRPC();
 	const cache = useCrmCache();
 	const fileInputId = useId();
@@ -115,10 +132,7 @@ export function ImportMaterialsSheet() {
 			}}
 		>
 			<SheetTrigger asChild>
-				<Button variant="outline">
-					<Icon icon={Upload} data-icon="inline-start" />
-					Import Excel
-				</Button>
+				<ImportButton />
 			</SheetTrigger>
 			<SheetContent side="right">
 				<SheetHeader>

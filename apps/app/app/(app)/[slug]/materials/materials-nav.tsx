@@ -19,6 +19,28 @@ function isActive(href: string, root: string, pathname: string): boolean {
 	return href === root ? pathname === href : pathname.startsWith(href);
 }
 
+export function MaterialsNavFallback() {
+	return (
+		<nav
+			aria-label="Materials"
+			aria-busy="true"
+			className="flex gap-1 overflow-x-auto border-b pb-3"
+		>
+			{ITEMS.map((item) => (
+				<Button
+					key={item.href}
+					variant="ghost"
+					size="sm"
+					disabled
+					className="shrink-0 font-normal text-muted-foreground"
+				>
+					{item.title}
+				</Button>
+			))}
+		</nav>
+	);
+}
+
 export function MaterialsNav() {
 	const pathname = usePathname();
 	const workspaceUrl = useWorkspaceUrl();

@@ -14,7 +14,7 @@ import { requireSession } from "@/lib/session";
 import { HydrateClient } from "@/lib/trpc/hydrate";
 import { getServerQueryClient, getServerTrpc } from "@/lib/trpc/server";
 import { ImportMaterialsSheet } from "./import-materials-sheet";
-import { MaterialsNav } from "./materials-nav";
+import { MaterialsNav, MaterialsNavFallback } from "./materials-nav";
 import { materialsSearchParams } from "./materials-search-params";
 import { MaterialsTable } from "./materials-table";
 
@@ -40,7 +40,9 @@ export default function MaterialsPage({
 				</PageShellActions>
 			</PageShellHeader>
 
-			<MaterialsNav />
+			<Suspense fallback={<MaterialsNavFallback />}>
+				<MaterialsNav />
+			</Suspense>
 
 			<PageShellContent className="min-h-0">
 				<Suspense fallback={<PageShellLoading />}>

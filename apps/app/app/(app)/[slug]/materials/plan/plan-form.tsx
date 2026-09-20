@@ -11,19 +11,25 @@ import { Spinner } from "@crm/ui/components/spinner";
 import { TableCell, TableRow } from "@crm/ui/components/table";
 import { cn } from "@crm/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useTRPC } from "@/lib/trpc/client";
 
 type PlanRow = { key: string; modelCode: string; quantity: string };
 
-function emptyRow(): PlanRow {
-	return { key: crypto.randomUUID(), modelCode: "", quantity: "" };
-}
-
 export function PlanForm() {
 	const trpc = useTRPC();
 	const formId = useId();
-	const [rows, setRows] = useState<PlanRow[]>([emptyRow()]);
+	const rowIdBase = useId();
+	const nextRowIndex = useRef(1);
+	const [rows, setRows] = useState<PlanRow[]>(() => [
+		{ key: `${rowIdBase}-0`, modelCode: "", quantity: "" },
+	]);
+
+	const addRow = () => {
+		const key = `${rowIdBase}-${nextRowIndex.current}`;
+		nextRowIndex.current += 1;
+		setRows((current) => [...current, { key, modelCode: "", quantity: "" }]);
+	};
 
 	const requirement = useMutation(trpc.materials.requirement.mutationOptions());
 
@@ -96,12 +102,7 @@ export function PlanForm() {
 				</div>
 
 				<div className="flex items-center gap-2">
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => setRows((current) => [...current, emptyRow()])}
-					>
+					<Button type="button" variant="outline" size="sm" onClick={addRow}>
 						<Icon icon={Add} data-icon="inline-start" />
 						Add model
 					</Button>

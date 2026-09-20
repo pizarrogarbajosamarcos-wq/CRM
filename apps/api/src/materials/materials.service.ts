@@ -281,8 +281,9 @@ export class MaterialsService {
 				else counts.materialsUpdated++;
 			}
 
+			const countedModelCodes = new Set<string>();
 			for (const row of fichaRows) {
-				await this.upsertFichaLine(tx, row, counts);
+				await this.upsertFichaLine(tx, row, counts, countedModelCodes);
 			}
 		});
 
@@ -411,11 +412,13 @@ export class MaterialsService {
 		tx: PrismaNamespace.TransactionClient,
 		row: FichaImportRow,
 		counts: {
+			materialsCreated: number;
 			modelsCreated: number;
 			modelsUpdated: number;
 			bomLinesCreated: number;
 			bomLinesUpdated: number;
 		},
+		countedModelCodes: Set<string>,
 	): Promise<void> {
 		const existingModel = await tx.productModel.findUnique({
 			where: { code: row.modelCode },
@@ -428,12 +431,19 @@ export class MaterialsService {
 			: await tx.productModel.create({
 					data: { code: row.modelCode, name: row.modelName },
 				});
-		if (existingModel) counts.modelsUpdated++;
-		else counts.modelsCreated++;
+
+		if (!countedModelCodes.has(row.modelCode)) {
+			countedModelCodes.add(row.modelCode);
+			if (existingModel) counts.modelsUpdated++;
+			else counts.modelsCreated++;
+		}
 
 		const materialKey = groupingKey(row);
+		const existingMaterial = await tx.rawMaterial.findUnique({
+			where: materialKey,
+		});
 		const material =
-			(await tx.rawMaterial.findUnique({ where: materialKey })) ??
+			existingMaterial ??
 			(await tx.rawMaterial.create({
 				data: {
 					article: row.article,
@@ -443,6 +453,7 @@ export class MaterialsService {
 					unit: row.unit,
 				},
 			}));
+		if (!existingMaterial) counts.materialsCreated++;
 
 		const lineKey = {
 			productModelId_rawMaterialId: {

@@ -12,7 +12,7 @@ import {
 import { requireSession } from "@/lib/session";
 import { HydrateClient } from "@/lib/trpc/hydrate";
 import { getServerQueryClient, getServerTrpc } from "@/lib/trpc/server";
-import { MaterialsNav } from "../materials-nav";
+import { MaterialsNav, MaterialsNavFallback } from "../materials-nav";
 import { ModelDetailSheet } from "./model-detail-sheet";
 import { modelsSearchParams } from "./models-search-params";
 import { ModelsTable } from "./models-table";
@@ -35,7 +35,9 @@ export default function ModelsPage({
 				</PageShellHeading>
 			</PageShellHeader>
 
-			<MaterialsNav />
+			<Suspense fallback={<MaterialsNavFallback />}>
+				<MaterialsNav />
+			</Suspense>
 
 			<PageShellContent className="min-h-0">
 				<Suspense fallback={<PageShellLoading />}>
@@ -43,7 +45,9 @@ export default function ModelsPage({
 				</Suspense>
 			</PageShellContent>
 
-			<ModelDetailSheet />
+			<Suspense fallback={null}>
+				<ModelDetailSheet />
+			</Suspense>
 		</PageShell>
 	);
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import {
 	PageShell,
 	PageShellContent,
@@ -7,7 +8,7 @@ import {
 	PageShellHeading,
 	PageShellTitle,
 } from "@/components/page-shell";
-import { MaterialsNav } from "../materials-nav";
+import { MaterialsNav, MaterialsNavFallback } from "../materials-nav";
 import { PlanForm } from "./plan-form";
 
 export const metadata: Metadata = {
@@ -26,7 +27,9 @@ export default function PlanPage() {
 				</PageShellHeading>
 			</PageShellHeader>
 
-			<MaterialsNav />
+			<Suspense fallback={<MaterialsNavFallback />}>
+				<MaterialsNav />
+			</Suspense>
 
 			<PageShellContent className="min-h-0">
 				<PlanForm />
