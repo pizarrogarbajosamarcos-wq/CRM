@@ -23,9 +23,14 @@ export const SEARCH_PARAM = {
 		switcher: "k",
 		closeDeal: "closeDeal",
 		closeStage: "closeStage",
+		importSheet: "import",
 	},
 	overview: {
 		scope: "scope",
+	},
+	materials: {
+		model: "model",
+		plan: "plan",
 	},
 } as const;
 

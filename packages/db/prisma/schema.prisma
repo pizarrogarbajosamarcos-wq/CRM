@@ -1106,6 +1106,58 @@ model SavedView {
   @@map("savedView")
 }
 
+model RawMaterial {
+  id      String  @id @default(cuid())
+  article String
+  color   String  @default("")
+  measure String  @default("")
+  design  String  @default("")
+  name    String?
+  unit    String
+
+  stockQty Decimal @default(0) @db.Decimal(14, 3)
+
+  modelLines ProductModelMaterial[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([article, color, measure, design])
+  @@index([article])
+  @@map("rawMaterial")
+}
+
+model ProductModel {
+  id   String  @id @default(cuid())
+  code String  @unique
+  name String?
+
+  materials ProductModelMaterial[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("productModel")
+}
+
+model ProductModelMaterial {
+  id String @id @default(cuid())
+
+  productModelId String
+  productModel   ProductModel @relation(fields: [productModelId], references: [id], onDelete: Cascade)
+  rawMaterialId  String
+  rawMaterial    RawMaterial  @relation(fields: [rawMaterialId], references: [id], onDelete: Cascade)
+
+  consumptionPerUnit Decimal @db.Decimal(14, 4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productModelId, rawMaterialId])
+  @@index([rawMaterialId])
+  @@map("productModelMaterial")
+}
+
 model Activity {
   id      String       @id @default(cuid())
   type    ActivityType

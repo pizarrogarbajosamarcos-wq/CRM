@@ -26,6 +26,7 @@ import { enrichmentQueueInput } from "@crm/validation/enrichment-queue";
 import { fieldListInput, fieldListOutput, fieldByKeyInput, serializedFieldOutput, fieldEntityInput, fieldFiltersOutput, fieldIdInput, fieldCoverageOutput, fieldCreateInput, fieldUpdateArgs, fieldReorderInput, fieldReorderOutput, fieldDeleteOutput, fieldBackfillOutput } from "../fields/fields.contracts";
 import { googleConnectionStatusOutput, setAutoCreateInput, suppressDomainInput, suppressDomainOutput, threadInput, emailThreadOutput, calendarEventInput, calendarEventOutput } from "../google/google.contracts";
 import { purgeSyncedDataOutput, revokeAccessOutput, microsoftConnectionStatusOutput, setOutlookAutoCreateInput } from "../microsoft/microsoft.contracts";
+import { materialListInput, materialListOutput, updateStockInput, materialRowOutput, rawMaterialIdInput, modelListInput, modelListOutput, modelIdInput, modelDetailOutput, importExcelInput, importExcelOutput, requirementInput, requirementOutput } from "../materials/materials.contracts";
 import { savedViewListInput, savedViewListOutput, savedViewCreateInput, savedViewOutput, savedViewUpdateArgs, savedViewIdInput, savedViewDeleteOutput } from "../saved-views/saved-views.contracts";
 import { agentModelOutput, modelCatalogOutput, setAgentModelInput, researchKeyOutput, setResearchKeyInput, archiveRetentionOutput, setArchiveRetentionDaysInput } from "../settings/settings.contracts";
 import { slackStatusOutput, slackMatchesOutput, slackChannelsInput, slackChannelsOutput, slackJoinChannelInput, slackJoinChannelOutput, slackRefreshPeopleOutput, slackCreateChannelInput, slackCreateChannelOutput, slackDisconnectOutput } from "../slack/slack.contracts";
@@ -557,6 +558,40 @@ const appRouter = t.router({
       .input(calendarEventInput)
       .output(calendarEventOutput)
       .query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    }),
+  materials: t.router({
+    listRawMaterials: publicProcedure
+      .input(materialListInput)
+      .output(materialListOutput)
+      .query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    updateStock: publicProcedure
+      .input(updateStockInput)
+      .output(materialRowOutput)
+      .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    deleteRawMaterial: publicProcedure
+      .input(rawMaterialIdInput)
+      .output(rawMaterialIdInput)
+      .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    listModels: publicProcedure
+      .input(modelListInput)
+      .output(modelListOutput)
+      .query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    modelDetail: publicProcedure
+      .input(modelIdInput)
+      .output(modelDetailOutput)
+      .query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    deleteModel: publicProcedure
+      .input(modelIdInput)
+      .output(modelIdInput)
+      .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    importExcel: publicProcedure
+      .input(importExcelInput)
+      .output(importExcelOutput)
+      .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    requirement: publicProcedure
+      .input(requirementInput)
+      .output(requirementOutput)
+      .mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
     }),
   microsoft: t.router({
     status: publicProcedure

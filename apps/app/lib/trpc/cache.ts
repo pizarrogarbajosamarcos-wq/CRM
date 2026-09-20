@@ -41,6 +41,7 @@ export type CrmCache = {
 	sso(options?: Options): Promise<void>;
 	apiKeys(options?: Options): Promise<void>;
 	tracking(options?: Options): Promise<void>;
+	materials(options?: Options): Promise<void>;
 	everything(): Promise<void>;
 };
 
@@ -316,6 +317,16 @@ export function useCrmCache(): CrmCache {
 			),
 
 		apiKeys: (options) => run([trpc.apiKeys.list.pathKey()], [], options),
+
+		materials: (options) =>
+			run(
+				[
+					trpc.materials.listRawMaterials.pathKey(),
+					trpc.materials.listModels.pathKey(),
+				],
+				[],
+				options,
+			),
 
 		tracking: (options) =>
 			run(
